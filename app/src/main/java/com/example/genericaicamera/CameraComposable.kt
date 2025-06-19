@@ -1,16 +1,23 @@
 package com.example.genericaicamera
 
+import android.Manifest
 import android.view.Surface
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -19,9 +26,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun CameraPreview(
+    paddingValues: PaddingValues,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -34,7 +46,32 @@ fun CameraPreview(
     }
     val preview = remember { Preview.Builder().build() }
     val previewView = remember { PreviewView(context) }
-    val cameraEnabled by viewModel.cameraEnabled.observeAsState(false)
+    val cameraEnabled by remember { mutableStateOf(true) }
+
+    // Check for permissions.
+    // https://medium.com/@chiragthummar16/requesting-permission-jetpack-compose-the-complete-guide-03e8aaa1f4a0
+    val permissionCamera = rememberPermissionState(
+        permission = Manifest.permission.CAMERA
+    )
+    val showCameraRationalDialog = remember { mutableStateOf(false) }
+    val launcherCamera = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { permissionGranted ->
+        if (permissionGranted) {
+            // isLocked = false
+        } else {
+            if (permissionCamera.status.shouldShowRationale) {
+                // Show a rationale if needed (optional)
+                showCameraRationalDialog.value = true
+            } else {
+                showCameraRationalDialog.value = true
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        launcherCamera.launch(Manifest.permission.CAMERA)
+    }
 
     if (cameraEnabled) {
 
@@ -52,7 +89,7 @@ fun CameraPreview(
             .build()
             .apply {
                 setAnalyzer(ContextCompat.getMainExecutor(context)) {
-                    viewModel.detectorHelper.detectLivestreamFrame(it)
+                    // viewModel.detectorHelper.detectLivestreamFrame(it)
                 }
             }
 
@@ -70,8 +107,9 @@ fun CameraPreview(
         factory = { previewView },
         modifier = Modifier
             .fillMaxWidth()
+            .padding(paddingValues)
             .aspectRatio(3f / 4)
     ) {
-        // preview.setSurfaceProvider(previewView.surfaceProvider)
+        preview.surfaceProvider = previewView.surfaceProvider
     }
 }
