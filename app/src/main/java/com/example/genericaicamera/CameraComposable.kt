@@ -89,7 +89,7 @@ fun CameraPreview(
             .build()
             .apply {
                 setAnalyzer(ContextCompat.getMainExecutor(context)) {
-                    // viewModel.detectorHelper.detectLivestreamFrame(it)
+                    viewModel.detectLivestreamFrame(it)
                 }
             }
 
