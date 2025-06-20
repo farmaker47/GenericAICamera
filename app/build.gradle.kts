@@ -70,6 +70,15 @@ dependencies {
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
+
+    // TensorFlow Lite
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
+//    implementation("com.google.ai.edge.litert:litert-support:1.2.0")
+//    implementation("com.google.ai.edge.litert:litert:1.2.0")
+//    implementation("com.google.ai.edge.litert:litert-gpu:1.2.0")
+//    implementation("com.google.ai.edge.litert:litert-gpu-api:1.2.0")
+
 }
 
 // Allow references to generated code
