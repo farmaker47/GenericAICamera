@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -109,6 +110,11 @@ fun CameraPreview(
             .fillMaxWidth()
             .padding(paddingValues)
             .aspectRatio(3f / 4)
+            .onSizeChanged { size ->
+                // size.width and size.height represent the actual dimensions of the preview view
+                // Log.d("CameraPreview", "Preview size: ${size.width} ${size.height}")
+                viewModel.updateCameraViewValues(size.width, size.height)
+            }
     ) {
         preview.surfaceProvider = previewView.surfaceProvider
     }

@@ -24,12 +24,18 @@ import javax.inject.Inject
 import androidx.core.graphics.set
 import com.example.genericaicamera.Utils.MODEL_INPUTS_SIZE
 import androidx.core.graphics.scale
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @HiltViewModel
 class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
     private var interpreter: Interpreter? = null
     private val context = application
+    private val _maskBitmap = MutableStateFlow(createBitmap(1, 1))
+    val maskBitmap = _maskBitmap.asStateFlow()
+    private var androidCameraViewWidth = 0
+    private var androidCameraViewHeight = 0
 
     init {
         loadModel()
@@ -154,40 +160,27 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
         val floatArray = probabilityBuffer.floatArray
 
-//        val mask = convertBytebufferMaskToBitmap(
-//            probabilityBuffer.buffer,
-//            MODEL_INPUTS_SIZE,
-//            MODEL_INPUTS_SIZE,
-//            segmentColors
-//        )
+        val mask = convertFloatArrayToBitmap(floatArray)
+        val resizedMask = mask.scale(androidCameraViewWidth, androidCameraViewHeight, false)
 
-        val mask = convertFloatArrayToBitmap(floatArray, MODEL_INPUTS_SIZE, MODEL_INPUTS_SIZE)
-        val resizedMask = mask.scale(imageProxy.width, imageProxy.height, false)
-
-
-        // Log.v("tensors_", floatArray?.size.toString())
-
-
+        _maskBitmap.value = resizedMask
 
         Log.v("time_", (System.currentTimeMillis() - frameTime).toString())
 
-
-        // Log.v("width_", rotatedBitmap.height.toString())
-        // 480 x 640
         rotatedBitmap.recycle()
     }
 
     private fun convertFloatArrayToBitmap(
         floatArray: FloatArray,
-        imageWidth: Int,
-        imageHeight: Int
+        imageWidth: Int = MODEL_INPUTS_SIZE,
+        imageHeight: Int = MODEL_INPUTS_SIZE
     ): Bitmap {
         val bitmap = createBitmap(imageWidth, imageHeight)
         for (y in 0 until imageHeight) {
             for (x in 0 until imageWidth) {
                 val index = y * imageWidth + x
-                if (floatArray[index] > 0) {
-                    bitmap[x, y] = Color.WHITE
+                if (floatArray[index] > 0.05) { // threshold from python notebook
+                    bitmap[x, y] = Color.RED
                 } else {
                     bitmap[x, y] = Color.TRANSPARENT
                 }
@@ -196,40 +189,13 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         return bitmap
     }
 
+    fun updateCameraViewValues(width: Int, height: Int) {
+        androidCameraViewWidth = width
+        androidCameraViewHeight = height
+    }
+
     override fun onCleared() {
         super.onCleared()
         interpreter?.close()
     }
 }
-
-//    private fun convertBytebufferMaskToBitmap(
-//        inputBuffer: ByteBuffer,
-//        imageWidth: Int,
-//        imageHeight: Int,
-//        colors: IntArray
-//    ): Bitmap {
-//        val conf = Bitmap.Config.ARGB_8888
-//        val maskBitmap = createBitmap(imageWidth, imageHeight, conf)
-//        val mSegmentBits = Array(imageWidth) { IntArray(imageHeight) }
-//        inputBuffer.rewind()
-//
-//        for (y in 0 until imageHeight) {
-//            for (x in 0 until imageWidth) {
-//                var maxVal = 0f
-//                mSegmentBits[y][x] = 0
-//
-//                for (c in 0 until NUM_CLASSES) {
-//                    val value = inputBuffer
-//                        .getFloat((y * imageWidth * NUM_CLASSES + x * NUM_CLASSES + c) * 4)
-//                    if (c == 0 || value > maxVal) {
-//                        maxVal = value
-//                        mSegmentBits[y][x] = c
-//                    }
-//                }
-//                maskBitmap[x, y] = colors[mSegmentBits[y][x]]
-//            }
-//        }
-//
-//        return maskBitmap
-//    }
-
