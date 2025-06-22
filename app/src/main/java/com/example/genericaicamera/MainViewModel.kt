@@ -54,7 +54,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     }
 
     // If LiteRT comes back with a fix for num of threads
-//    private fun loadModel(model: String) {
+//    private fun loadModel() {
 //        val compatList = CompatibilityList()
 //        val options = Interpreter.Options().apply{
 //            if(compatList.isDelegateSupportedOnThisDevice){
@@ -69,7 +69,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 //            }
 //        }
 //
-//        interpreter = Interpreter(loadModelFile(model), options)
+//        interpreter = Interpreter(loadModelFile(), options)
 //    }
 
     // If you want to go with LiteRT
@@ -179,7 +179,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         for (y in 0 until imageHeight) {
             for (x in 0 until imageWidth) {
                 val index = y * imageWidth + x
-                if (floatArray[index] > 0.05) { // threshold from python notebook
+                if (floatArray[index] > 0.04) { // threshold from python notebook
                     bitmap[x, y] = Color.RED
                 } else {
                     bitmap[x, y] = Color.TRANSPARENT
